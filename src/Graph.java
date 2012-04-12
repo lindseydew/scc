@@ -1,4 +1,6 @@
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Stack;
 
 /**
@@ -13,6 +15,10 @@ public class Graph {
     private int V;
     private int countE;
     private LinkedList<Integer>[] adj;
+    
+    enum VertexState {
+        White, Gray, Black
+    }
 
 
     /**
@@ -93,6 +99,7 @@ public class Graph {
         countE++;
         adj[u].add(v);
     }
+
     /**
      * Return the list of neighbors of vertex v as in Iterable.
      */
@@ -143,47 +150,162 @@ public class Graph {
         StringBuilder s = new StringBuilder();
         String NEWLINE = System.getProperty("line.separator");
         s.append(V + " vertices, " + countE + " edges" + NEWLINE);
-        s.append("{ ");
+        s.append("[ ");
         for(int v = 0; v < V; v++) {
-            s.append("[ ");
+            s.append("{ ");
             for (int w : adj[v]) {
                 s.append(w + " ");
 
             }
-            s.append("]");
+            s.append("}");
         }
-        s.append(" }");
+        s.append(" ]");
         return s.toString();
     }
+
     
+    public Graph gReverse() {
+        int nVertices = V;
+        Graph reversedGraph = new Graph(nVertices);
+        for(int v = 0; v < V; v++)
+           for(int w: adj[v]) {
+               reversedGraph.addEdge(w, v);
+           }
+        return reversedGraph;
+    }
     
-    public void depthFirstSearch(Graph graph, int startV) {
-        boolean[] visited = new boolean[graph.getV()];
-        int t = 0;
-        String[] finishingTime = new String[graph.getV()];
-        visited[startV] = true;
-       //get neighbours of V
-        for(int w : adj[startV]) {
-            if(visited[w] == false) {
-                visited[w] = true;
-                depthFirstSearch(graph, w);
+    public Graph orderedGraph(Graph graph, Map<Integer, Integer> finishingTime) {
+        Graph revOrderedGraph = new Graph(V);
+        Graph reverse = graph.gReverse();
+        for(int v = 0; v < V; v++) {
+            LinkedList<Integer>[] revAdj = reverse.getAdj();
+            for(int w : revAdj[v]) {
+                int v1 = finishingTime.get(v);
+                int w1 = finishingTime.get(w);
+                revOrderedGraph.addEdge(v1, w1);
             }
         }
-        t++;
-        finishingTime[startV] = "f(" + t + ")";
-        printResult(finishingTime);
+        Graph orderedGraph = revOrderedGraph.gReverse();
+        return orderedGraph;
     }
 
-
-
-
-    public void printResult(String[] array) {
-        for(String m : array) {
-            System.out.print(m);
-            System.out.println("");
+    public Map<Integer, Integer> DFS()  {
+        Map<Integer, Integer> finishingTime = new HashMap<Integer, Integer>();
+        VertexState state[] = new VertexState[V];
+        for(int v = 0; v < V; v++) {
+           state[v] = VertexState.White;
         }
+        for(int i = V - 1; i >= 0; i--) {
+            if(state[i] == VertexState.White) {
+            runDFSFirstPass(i, state, finishingTime);
+            }
+        }
+
+        return finishingTime;
+    }
+    public void runDFSFirstPass(int u, VertexState[] state, Map<Integer, Integer> finishingTime) {
+
+        state[u] = VertexState.Gray;
+        //get neighbours of V
+        for(int w : adj[u]) {
+            if(state[w] == VertexState.White) {
+                runDFSFirstPass(w, state, finishingTime);
+            }
+        }
+
+        state[u] = VertexState.Black;
+        finishingTime.put(u, time);
+        time = time + 1;
+    }
+    int s;
+
+    public LinkedList<Integer> DFSSecond() {
+        LinkedList<LinkedList<Integer>> leaders = new LinkedList<LinkedList<Integer>>();
+        VertexState state[] = new VertexState[V];
+        for(int v = 0; v < V; v++) {
+            state[v] = VertexState.White;
+        }
+        for(int i = V - 1; i > 0; i--) {
+            if(state[i] == VertexState.White){
+                s = i;
+                runDFSStackSecondPass(s, i, state);
+            }
+        }
+        return numberOfS;
+    }
+    int time = 0;
+
+    LinkedList<Integer> numberOfS = new LinkedList<Integer>();
+
+
+    public void runDFSSecondPass(int s, int u, VertexState[] state) {
+
+//        LinkedList<Integer> ithConnectedComponent = new LinkedList<Integer>();
+        numberOfS.add(s);
+        state[u] = VertexState.Gray;
+        for(int w : adj[u]) {
+            if(state[w] == VertexState.White) {
+                runDFSSecondPass(s, w, state);
+            }
+        }
+        state[u] = VertexState.Black;
+
+//        ithConnectedComponent.add(s);
+//        leaders.add(ithConnectedComponent);
+    }
+    
+    
+    public LinkedList<LinkedList<Integer>> instantiateLinkedList() {
+        LinkedList<LinkedList<Integer>> leaders = new LinkedList<LinkedList<Integer>>();
+        LinkedList<Integer> connectedComponent1 = new LinkedList<Integer>();
+        LinkedList<Integer> connectedComponent2 = new LinkedList<Integer>();
+        LinkedList<Integer> connectedComponent3 = new LinkedList<Integer>();
+        LinkedList<Integer> connectedComponent4 = new LinkedList<Integer>();
+        
+        connectedComponent1.add(4);
+        connectedComponent1.add(5);
+        connectedComponent2.add(3);
+        connectedComponent3.add(2);
+        connectedComponent4.add(0);
+        connectedComponent4.add(1);
+        connectedComponent4.add(2);
+        
+        leaders.add(connectedComponent1);
+        leaders.add(connectedComponent2);
+        leaders.add(connectedComponent3);
+        leaders.add(connectedComponent4);
+
+        return leaders;
+    }
+    int[] predecessors = new int[1000];
+    public void runDFSStackSecondPass(int s, int u, VertexState[] state) {
+          Stack<Integer> stack = new Stack<Integer>();
+          stack.push(u);
+          while(!stack.isEmpty()) {
+             int x = stack.pop();
+             if(state[x] != VertexState.Black) {
+                 state[x] = VertexState.Gray;
+                 for(int w : adj[x]) {
+                     predecessors[w] = x;
+                     if(state[w] == VertexState.White) {
+                         state[w] = VertexState.Gray;
+                         stack.push(w);
+                     }
+                 }
+             }
+             state[x] = VertexState.Black;
+          }
     }
 
+    public String finishingTimeToString(Map<Integer, Integer> finishingTime) {
+        StringBuilder s = new StringBuilder();
+        String NEWLINE = System.getProperty("line.separator");
+        for(Integer i = 0; i < V; i++) {
+            Integer time = finishingTime.get(i);
+            s.append("f(" + time + ") = " + i + NEWLINE );
+        }
 
+        return s.toString();
+    }
 
 }

@@ -25,14 +25,15 @@ public class GraphBuilderFromFile {
         }
     }
 
+
     public static Graph fileRead(String filename, int nLines) throws FileNotFoundException {
         Graph graph = new Graph(nLines);
+        Graph graphRev = new Graph(nLines);
         try {
             FileInputStream fstream = new FileInputStream(filename);
             DataInputStream in = new DataInputStream(fstream);
             BufferedReader br = new BufferedReader(new InputStreamReader(in));
             String line;
-            int[] vertices = new int[nLines];
 
             //vertices
             int i = 0;
@@ -54,16 +55,10 @@ public class GraphBuilderFromFile {
                 }
                 //vertices
                 int vertex1 = numbersInLine[0];
-                vertices[i] = vertex1;
+                int vertex2 = numbersInLine[1];
+                graph.addEdge(vertex1 - 1, vertex2 - 1);
+                graphRev.addEdge(vertex2 - 1, vertex1 - 1);
 
-                //edges
-                for (int vertex2 : numbersInLine) {
-                    if(vertex1 != vertex2) {
-                        graph.addEdge(vertex1 - 1, vertex2 - 1);
-                    }
-                }
-
-                i++;
             }
 
             in.close();
@@ -77,6 +72,4 @@ public class GraphBuilderFromFile {
         return graph;
     }
 
-
 }
-
